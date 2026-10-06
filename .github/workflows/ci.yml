@@ -46,8 +46,9 @@ jobs:
           # package.tgz 内容与脚本可执行位
           tar -tvf "$SPK" | grep -q 'scripts/start-stop-status' && \
             tar -tvf "$SPK" | awk '$1 ~ /^-rwx/ && $0 ~ /scripts\/start-stop-status/ {found=1} END{exit !found}'
-          tar -xzOf "$SPK" package.tgz | tar -t | grep -qx compose.yml
-          tar -xzOf "$SPK" package.tgz | tar -t | grep -qx env.example
+          # 外层未压缩 tar 用 -xOf 取 package.tgz 原始字节,再由第二个 tar 解包(gzip)
+          tar -xOf "$SPK" package.tgz | tar -tz | grep -qx compose.yml
+          tar -xOf "$SPK" package.tgz | tar -tz | grep -qx env.example
       - uses: actions/upload-artifact@v4
         with:
           name: spk
