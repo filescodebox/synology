@@ -72,7 +72,9 @@ assert_contains ".env 注入数据目录" "$(cat "$VAR/.env")" "FCB_DATA_DIR=$DA
 assert_contains ".env 注入密码"    "$(cat "$VAR/.env")" "FCB_ADMIN_PASSWORD=s3cret"
 assert_count   ".env 模板行保留且唯一(IMAGE_TAG)" "$(cat "$VAR/.env")" "^FCB_IMAGE_TAG="
 assert_count   ".env 注册开关保留且唯一"           "$(cat "$VAR/.env")" "^FCB_USER_ALLOW_REGISTRATION="
-assert_eq      ".env 权限 600" "$(stat -f '%Lp' "$VAR/.env" 2>/dev/null || stat -c '%a' "$VAR/.env")" "600"
+# GNU stat 先(-c 权限);macOS BSD stat 无 -c 会失败,再落 -f '%Lp'(顺序不可换:
+# GNU 的 -f 是"文件系统状态"且成功返回,放前面会吞掉兜底)
+assert_eq      ".env 权限 600" "$(stat -c '%a' "$VAR/.env" 2>/dev/null || stat -f '%Lp' "$VAR/.env")" "600"
 if [ -d "$DATA" ]; then ok "数据目录已创建"; else fail "数据目录未创建"; fi
 assert_contains "用户消息含端口" "$(cat "$LOGMSG")" "8080"
 
