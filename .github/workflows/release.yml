@@ -1,0 +1,85 @@
+name: Release
+# 打 v* tag → noarch SPK 发布:
+#   1. build: 组装 SPK
+#   2. release: 挂本仓 Release(GITHUB_TOKEN 同仓写即可)
+#   3. attach-to-hub: 回挂生态主仓 filescodebox/filescodebox(tag synology-v*,
+#      与 fnos-v*/openwrt-v* 同模式);跨仓写用 SYNOLOGY_PAT,未配置时本 job
+#      失败放行(continue-on-error),本地 `gh release upload` 兜底
+# workflow_dispatch: 传 version(现有 tag 名)对该版本手动重跑打包+双挂
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '目标版本(现有 tag 名,如 v0.1.0)。仅重跑 SPK 打包+双挂'
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # 手动 dispatch 时按输入版本检出对应 tag,产物与 tag 严格一致
+          ref: ${{ inputs.version || github.ref_name }}
+      - name: 组装 SPK(tag v0.1.0 → 包版本 0.1.0-0001)
+        run: |
+          VER="${{ inputs.version || github.ref_name }}"
+          ./scripts/build-spk.sh "${VER#v}" 0001
+      - uses: actions/upload-artifact@v4
+        with:
+          name: spk
+          path: dist/*.spk
+          retention-days: 14
+          if-no-files-found: error
+
+  release:
+    if: github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: spk
+          path: rel
+      - name: 挂本仓 Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VER: ${{ github.ref_name }}
+        run: |
+          gh release view "${VER}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1 || \
+            gh release create "${VER}" --repo "${GITHUB_REPOSITORY}" \
+              --title "FilesCodeBox Synology DSM ${VER}" \
+              --notes "群晖 DSM 7.2+ 套件包(noarch,见 Assets)。要求:套件中心先安装 Container Manager(24.0.2+)。安装:套件中心 → 手动安装 → 上传 SPK → 按向导设端口/数据目录/管理员密码。详见 README。"
+          gh release upload "${VER}" rel/*.spk --repo "${GITHUB_REPOSITORY}" --clobber
+
+  attach-to-hub:
+    continue-on-error: true
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: spk
+          path: rel
+      - name: 回挂包到生态主仓
+        env:
+          GH_TOKEN: ${{ secrets.SYNOLOGY_PAT }}
+          TAG: synology-${{ inputs.version || github.ref_name }}
+          VER: ${{ inputs.version || github.ref_name }}
+        run: |
+          NOTES=$(printf '%s\n\n---\n🗂 **组件仓库**: [filescodebox/synology](https://github.com/filescodebox/synology) · **完整变更日志**: [%s](https://github.com/filescodebox/synology/releases/tag/%s)\n🌐 **生态总览 / Latest**: [filescodebox/filescodebox](https://github.com/filescodebox/filescodebox/releases/latest)\n' \
+            "群晖 DSM 7.2+ 套件包(noarch,见 Assets)。安装说明见 synology 仓 README。" "${VER}" "${VER}")
+          gh release view "${TAG}" --repo filescodebox/filescodebox >/dev/null 2>&1 || \
+            gh release create "${TAG}" --repo filescodebox/filescodebox \
+              --title "FilesCodeBox Synology DSM ${VER}" \
+              --latest=false \
+              --notes "${NOTES}"
+          gh release upload "${TAG}" rel/*.spk --repo filescodebox/filescodebox --clobber
+          # 组件回挂恒不为 Latest(Latest 属于 hub 生态快照 v*);release 已存在时也兜底纠偏
+          gh release edit "${TAG}" --repo filescodebox/filescodebox --latest=false || true
+          echo "已回挂到 filescodebox/filescodebox Releases"

@@ -1,0 +1,8 @@
+#!/bin/sh
+# preinst —— 安装前校验(必须无副作用;非零退出中止安装)
+# ContainerManager 依赖已由 INFO install_dep_packages 保证,这里兜底探测 docker CLI。
+if [ ! -x /usr/local/bin/docker ] && ! command -v docker >/dev/null 2>&1; then
+    echo "未找到 docker 命令:请先在套件中心安装并启动 Container Manager" > "$SYNOPKG_TEMP_LOGFILE"
+    exit 1
+fi
+exit 0

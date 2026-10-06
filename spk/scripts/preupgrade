@@ -1,0 +1,3 @@
+#!/bin/sh
+# preupgrade —— 注意:全新安装时本脚本也会执行,无事可做必须 exit 0
+exit 0

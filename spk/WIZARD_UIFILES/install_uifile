@@ -1,0 +1,60 @@
+[
+  {
+    "step_title": "端口设置",
+    "items": [
+      {
+        "type": "textfield",
+        "desc": "FilesCodeBox 网页服务对外端口(1024-65535,默认 12345)。装好之后浏览器访问 http://NAS的IP:端口",
+        "subitems": [
+          {
+            "key": "wizard_host_port",
+            "desc": "对外端口",
+            "defaultValue": "12345",
+            "validator": {
+              "fn": "function(v){v=parseInt(v,10);return !isNaN(v) && v>=1024 && v<=65535;}",
+              "errorText": "端口必须是 1024-65535 之间的整数"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "step_title": "数据目录",
+    "items": [
+      {
+        "type": "textfield",
+        "desc": "数据目录(SQLite 数据库+上传文件+JWT 密钥都存这里,备份此目录=备份全部数据)。建议放在 docker 共享文件夹下;卸载套件默认保留数据。",
+        "subitems": [
+          {
+            "key": "wizard_data_dir",
+            "desc": "绝对路径",
+            "defaultValue": "/volume1/docker/filescodebox",
+            "validator": {
+              "fn": "function(v){return Object.prototype.toString.call(v)==='[object String]' && v.indexOf('/')===0;}",
+              "errorText": "必须是以 / 开头的绝对路径"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "step_title": "管理员密码",
+    "items": [
+      {
+        "type": "password",
+        "desc": "管理员账号 admin 的登录密码。留空则使用默认密码 admin123——装完后请立即登录网页修改(建议只用字母和数字)。",
+        "subitems": [
+          {
+            "key": "wizard_admin_password",
+            "desc": "管理员密码",
+            "validator": {
+              "allowBlank": true
+            }
+          }
+        ]
+      }
+    ]
+  }
+]

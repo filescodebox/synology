@@ -1,0 +1,15 @@
+#!/bin/sh
+# postuninst —— 默认保留数据目录,提示用户自行清理
+ENV_FILE="${SYNOPKG_PKGVAR}/.env"
+DATA_DIR=""
+if [ -f "$ENV_FILE" ]; then
+    DATA_DIR=$(sed -n 's|^FCB_DATA_DIR=||p' "$ENV_FILE" | head -n 1)
+fi
+{
+    echo "<p>FilesCodeBox 套件已卸载,容器已移除。</p>"
+    if [ -n "$DATA_DIR" ]; then
+        echo "<p>数据目录 <strong>${DATA_DIR}</strong> 已保留(SQLite 库+上传文件+JWT 密钥)。"
+        echo "确认不再使用后,可在 File Station 中手动删除。</p>"
+    fi
+} > "$SYNOPKG_TEMP_LOGFILE" 2>/dev/null || true
+exit 0

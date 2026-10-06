@@ -1,0 +1,18 @@
+#!/bin/sh
+# postupgrade —— 把 .env 的镜像版本对齐到本包版本(镜像 tag=包主版本,如 v0.2.0)
+ENV_FILE="${SYNOPKG_PKGVAR}/.env"
+[ -f "$ENV_FILE" ] || exit 0
+
+NEW_VER="${SYNOPKG_PKGVER:-}"
+[ -n "$NEW_VER" ] || exit 0
+IMG_TAG="v$(printf '%s' "$NEW_VER" | cut -d- -f1)"
+
+grep -vE '^FCB_IMAGE_TAG=' "$ENV_FILE" > "${ENV_FILE}.tmp"
+printf 'FCB_IMAGE_TAG=%s\n' "$IMG_TAG" >> "${ENV_FILE}.tmp"
+mv "${ENV_FILE}.tmp" "$ENV_FILE"
+
+cat > "$SYNOPKG_TEMP_LOGFILE" <<EOF
+<p>FilesCodeBox 已升级到 ${NEW_VER},镜像版本已对齐为 ${IMG_TAG}。</p>
+<p>套件将自动重启并按新版本重建容器;数据目录不变。</p>
+EOF
+exit 0

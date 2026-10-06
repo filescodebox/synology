@@ -1,0 +1,56 @@
+name: CI
+# 推送/PR:shellcheck 生命周期脚本 + SPK 组装 + 结构断言(无 DSM 可用,结构校验即门禁;
+# 真机安装验证须用户在 DSM 7.2 套件中心手动安装,未签名包确认第三方警告即可)
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: shellcheck(bash 严格模式与 sh 兼容性)
+        run: |
+          shellcheck -s sh spk/scripts/*
+      - name: compose 模板校验
+        run: docker compose -f spk/package/compose.yml config -q
+      - name: 向导 JSON 合法性
+        run: python3 -c "import json;json.load(open('spk/WIZARD_UIFILES/install_uifile'));json.load(open('spk/conf/privilege'))"
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 组装 SPK(CI 版本 0.0.0-0001)
+        run: ./scripts/build-spk.sh 0.0.0 0001
+      - name: 结构断言
+        run: |
+          SPK=dist/filescodebox_0.0.0-0001.spk
+          test -s "$SPK"
+          # 外层必须是未压缩 tar(gzip 会被套件中心拒收)
+          file "$SPK" | grep -qi 'tar archive'
+          # 顶层清单齐备
+          tar -tf "$SPK" | sort > /tmp/spk.list
+          for f in INFO package.tgz scripts/ scripts/start-stop-status scripts/postinst \
+                   conf/privilege WIZARD_UIFILES/install_uifile \
+                   PACKAGE_ICON.PNG PACKAGE_ICON_256.PNG LICENSE; do
+            grep -qx "$f" /tmp/spk.list || { echo "缺 $f"; exit 1; }
+          done
+          # INFO 关键字段
+          tar -xOf "$SPK" INFO | grep -q '^package="filescodebox"$'
+          tar -xOf "$SPK" INFO | grep -q '^arch="noarch"$'
+          tar -xOf "$SPK" INFO | grep -q '^install_dep_packages="ContainerManager>=24.0.2-1535"$'
+          tar -xOf "$SPK" INFO | grep -q '^version="0.0.0-0001"$'
+          # package.tgz 内容与脚本可执行位
+          tar -tvf "$SPK" | grep -q 'scripts/start-stop-status' && \
+            tar -tvf "$SPK" | awk '$1 ~ /^-rwx/ && $0 ~ /scripts\/start-stop-status/ {found=1} END{exit !found}'
+          tar -xzOf "$SPK" package.tgz | tar -t | grep -qx compose.yml
+          tar -xzOf "$SPK" package.tgz | tar -t | grep -qx env.example
+      - uses: actions/upload-artifact@v4
+        with:
+          name: spk
+          path: dist/*.spk
+          retention-days: 14
+          if-no-files-found: error
