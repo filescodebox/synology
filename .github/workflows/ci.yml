@@ -14,10 +14,19 @@ jobs:
       - name: shellcheck(bash 严格模式与 sh 兼容性)
         run: |
           shellcheck -s sh spk/scripts/*
+          shellcheck -s sh tests/run-tests.sh
       - name: compose 模板校验
         run: docker compose -f spk/package/compose.yml config -q
       - name: 向导 JSON 合法性
         run: python3 -c "import json;json.load(open('spk/WIZARD_UIFILES/install_uifile'));json.load(open('spk/conf/privilege'))"
+
+  script-smoke:
+    # 生命周期脚本 mock 冒烟(伪造 docker 与 DSM 环境变量):postinst .env 生成/
+    # start-stop-status 全流程/postupgrade 版本对齐。DSM 集成仍需真机。
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: tests/run-tests.sh
 
   build:
     runs-on: ubuntu-latest

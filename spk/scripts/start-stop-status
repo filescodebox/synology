@@ -3,7 +3,8 @@
 # 编排:compose.yml 随包装入 SYNOPKG_PKGDEST(升级随包更新);
 #       .env 在 SYNOPKG_PKGVAR(@appdata,升级/重装保留)。
 PKG="filescodebox"
-DOCKER="/usr/local/bin/docker"
+# SYNOPKG_DOCKER_BIN 仅供测试注入 mock(DSM 运行环境不会设置此变量)
+DOCKER="${SYNOPKG_DOCKER_BIN:-/usr/local/bin/docker}"
 [ -x "$DOCKER" ] || DOCKER="$(command -v docker 2>/dev/null)"
 if [ -z "$DOCKER" ]; then
     [ "$1" = "status" ] && exit 4
