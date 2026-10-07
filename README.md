@@ -27,8 +27,8 @@ PigeonBox（文件快递柜，匿名口令分享文本/文件）的 **群晖 Syn
 
 > NAS 首次启动需从 ghcr.io 拉取镜像（约 200MB）。国内网络拉取慢/失败时，可 SSH 到 NAS 手动导入后重启套件：
 > ```sh
-> sudo docker pull ghcr.io/pigeonbox/server:v0.15.0
-> sudo docker pull ghcr.io/pigeonbox/frontend:v0.15.0
+> sudo docker pull ghcr.io/pigeonbox/server:v0.15.3
+> sudo docker pull ghcr.io/pigeonbox/frontend:v0.15.3
 > ```
 > （镜像版本以 `数据目录/.env` 里的 `FCB_IMAGE_TAG` 为准。）
 
@@ -38,7 +38,7 @@ PigeonBox（文件快递柜，匿名口令分享文本/文件）的 **群晖 Syn
 
 | 变量 | 默认 | 说明 |
 |---|---|---|
-| `FCB_IMAGE_TAG` | `v0.15.0` | 镜像版本（升级套件会自动刷新，勿手改） |
+| `FCB_IMAGE_TAG` | `v0.15.3` | 镜像版本（升级套件会自动刷新，勿手改） |
 | `FCB_API_PORT` | `12345` | 对外端口（改动后建议同步改数据目录所在防火墙规则） |
 | `FCB_DATA_DIR` | 安装向导值 | 数据目录（SQLite+上传文件+JWT 密钥；**备份它=备份全部**） |
 | `FCB_ADMIN_PASSWORD` | 空 | 管理员密码（留空=`admin123`；改后停启用套件生效） |
