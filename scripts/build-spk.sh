@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 组装 FilesCodeBox 群晖 SPK(noarch docker-compose 包装,无需官方 toolchain)。
+# 组装 PigeonBox 群晖 SPK(noarch docker-compose 包装,无需官方 toolchain)。
 #
 # SPK 结构(全部一手来源核实,见 README「参考」节):
 #   外层 = 未压缩 tar(勿 gzip,否则套件中心报 Invalid file format)
@@ -13,7 +13,7 @@
 #     └── LICENSE
 #
 # 用法: ./scripts/build-spk.sh <版本号> <构建号>
-#   例: ./scripts/build-spk.sh 0.1.0 0001   → dist/filescodebox_0.1.0-0001.spk
+#   例: ./scripts/build-spk.sh 0.1.0 0001   → dist/pigeonbox_0.1.0-0001.spk
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -48,7 +48,7 @@ cp spk/PACKAGE_ICON.PNG spk/PACKAGE_ICON_256.PNG spk/LICENSE "$STAGE/"
 # 文本统一 LF(脚本/INFO 混入 CRLF 是套件执行失败的经典坑)
 find "$STAGE" -type f -exec perl -pi -e 's/\r$//' {} +
 
-OUT="dist/filescodebox_${INFO_VERSION}.spk"
+OUT="dist/pigeonbox_${INFO_VERSION}.spk"
 mkdir -p dist
 tar -cf "$OUT" -C "$STAGE" \
     INFO package.tgz scripts conf WIZARD_UIFILES \

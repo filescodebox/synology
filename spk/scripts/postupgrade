@@ -12,7 +12,7 @@ printf 'FCB_IMAGE_TAG=%s\n' "$IMG_TAG" >> "${ENV_FILE}.tmp"
 mv "${ENV_FILE}.tmp" "$ENV_FILE"
 
 cat > "$SYNOPKG_TEMP_LOGFILE" <<EOF
-<p>FilesCodeBox 已升级到 ${NEW_VER},镜像版本已对齐为 ${IMG_TAG}。</p>
+<p>PigeonBox 已升级到 ${NEW_VER},镜像版本已对齐为 ${IMG_TAG}。</p>
 <p>套件将自动重启并按新版本重建容器;数据目录不变。</p>
 EOF
 exit 0

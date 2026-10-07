@@ -9,7 +9,7 @@ if [ ! -f "$ENV_FILE" ]; then
         grep -vE '^(FCB_API_PORT|FCB_DATA_DIR|FCB_ADMIN_PASSWORD)=' \
             "${SYNOPKG_PKGDEST}/env.example"
         printf 'FCB_API_PORT=%s\n'       "${wizard_host_port:-12345}"
-        printf 'FCB_DATA_DIR=%s\n'       "${wizard_data_dir:-/volume1/docker/filescodebox}"
+        printf 'FCB_DATA_DIR=%s\n'       "${wizard_data_dir:-/volume1/docker/pigeonbox}"
         printf 'FCB_ADMIN_PASSWORD=%s\n' "${wizard_admin_password:-}"
     } > "$ENV_FILE"
     chmod 600 "$ENV_FILE"
@@ -23,7 +23,7 @@ if [ -n "$DATA_DIR" ] && [ "$DATA_DIR" != "/" ]; then
 fi
 
 cat > "$SYNOPKG_TEMP_LOGFILE" <<EOF
-<p>FilesCodeBox 安装完成。</p>
+<p>PigeonBox 安装完成。</p>
 <p>启动套件后浏览器访问 <strong>http://NAS的IP:${wizard_host_port:-12345}</strong></p>
 <p>默认管理员 <strong>admin</strong>${wizard_admin_password:+(密码为安装时设置)}${wizard_admin_password:-(默认密码 admin123,请立即修改)}。</p>
 EOF

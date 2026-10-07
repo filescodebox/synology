@@ -23,7 +23,7 @@ jobs:
         # 模板真相源=hub 仓 deploy/nas/;模板一动未同步的仓全部变红
         run: |
           curl -fsSL --retry 3 --connect-timeout 15 \
-            https://raw.githubusercontent.com/filescodebox/filescodebox/main/deploy/nas/sync.sh -o /tmp/nas-sync.sh
+            https://raw.githubusercontent.com/pigeonbox/pigeonbox/main/deploy/nas/sync.sh -o /tmp/nas-sync.sh
           bash /tmp/nas-sync.sh check --platform synology --dir .
 
   script-smoke:
@@ -42,7 +42,7 @@ jobs:
         run: ./scripts/build-spk.sh 0.0.0 0001
       - name: 结构断言
         run: |
-          SPK=dist/filescodebox_0.0.0-0001.spk
+          SPK=dist/pigeonbox_0.0.0-0001.spk
           test -s "$SPK"
           # 外层必须是未压缩 tar(gzip 会被套件中心拒收)
           file "$SPK" | grep -qi 'tar archive'
@@ -54,7 +54,7 @@ jobs:
             grep -qx "$f" /tmp/spk.list || { echo "缺 $f"; exit 1; }
           done
           # INFO 关键字段
-          tar -xOf "$SPK" INFO | grep -q '^package="filescodebox"$'
+          tar -xOf "$SPK" INFO | grep -q '^package="pigeonbox"$'
           tar -xOf "$SPK" INFO | grep -q '^arch="noarch"$'
           tar -xOf "$SPK" INFO | grep -q '^install_dep_packages="ContainerManager>=24.0.2-1535"$'
           tar -xOf "$SPK" INFO | grep -q '^version="0.0.0-0001"$'

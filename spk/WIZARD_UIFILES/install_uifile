@@ -4,7 +4,7 @@
     "items": [
       {
         "type": "textfield",
-        "desc": "FilesCodeBox 网页服务对外端口(1024-65535,默认 12345)。装好之后浏览器访问 http://NAS的IP:端口",
+        "desc": "PigeonBox 网页服务对外端口(1024-65535,默认 12345)。装好之后浏览器访问 http://NAS的IP:端口",
         "subitems": [
           {
             "key": "wizard_host_port",
@@ -29,7 +29,7 @@
           {
             "key": "wizard_data_dir",
             "desc": "绝对路径",
-            "defaultValue": "/volume1/docker/filescodebox",
+            "defaultValue": "/volume1/docker/pigeonbox",
             "validator": {
               "fn": "function(v){return Object.prototype.toString.call(v)==='[object String]' && v.indexOf('/')===0;}",
               "errorText": "必须是以 / 开头的绝对路径"

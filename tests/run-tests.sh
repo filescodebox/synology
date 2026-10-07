@@ -101,7 +101,7 @@ SYNOPKG_DOCKER_BIN="$TMP/mock-docker" SYNOPKG_PKGDEST="$DEST" SYNOPKG_PKGVAR="$V
 rc=$?
 assert_eq "start 退出码" "$rc" "0"
 assert_contains "compose up -d 已调用"      "$(cat "$MOCK_LOG")" "up -d"
-assert_contains "项目名固定 filescodebox"    "$(cat "$MOCK_LOG")" "-p filescodebox"
+assert_contains "项目名固定 pigeonbox"    "$(cat "$MOCK_LOG")" "-p pigeonbox"
 assert_contains "env-file 指向 PKGVAR/.env" "$(cat "$MOCK_LOG")" "--env-file $VAR/.env"
 assert_contains "-f 指向包内 compose.yml"    "$(cat "$MOCK_LOG")" "-f $DEST/compose.yml"
 if [ -d "$DATA" ]; then ok "start 兜底数据目录已建"; else fail "start 兜底数据目录未建"; fi
@@ -125,7 +125,7 @@ assert_contains "down --remove-orphans 已调用" "$(cat "$MOCK_LOG")" "down --r
 echo "── T7 log:输出日志路径"
 out=$(SYNOPKG_DOCKER_BIN="$TMP/mock-docker" SYNOPKG_PKGDEST="$DEST" SYNOPKG_PKGVAR="$VAR" \
     sh spk/scripts/start-stop-status log)
-assert_eq "log 输出日志文件路径" "$out" "$VAR/filescodebox.log"
+assert_eq "log 输出日志文件路径" "$out" "$VAR/pigeonbox.log"
 
 echo "── T8 start:.env 缺失时从包内 env.example 兜底"
 rm -f "$VAR/.env"

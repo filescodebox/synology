@@ -2,7 +2,7 @@
 # start-stop-status —— 套件生命周期:start/stop/status(+log 供 synopkg log)
 # 编排:compose.yml 随包装入 SYNOPKG_PKGDEST(升级随包更新);
 #       .env 在 SYNOPKG_PKGVAR(@appdata,升级/重装保留)。
-PKG="filescodebox"
+PKG="pigeonbox"
 # SYNOPKG_DOCKER_BIN 仅供测试注入 mock(DSM 运行环境不会设置此变量)
 DOCKER="${SYNOPKG_DOCKER_BIN:-/usr/local/bin/docker}"
 [ -x "$DOCKER" ] || DOCKER="$(command -v docker 2>/dev/null)"
@@ -16,11 +16,11 @@ PKGDEST="${SYNOPKG_PKGDEST:-/var/packages/${PKG}/target}"
 PKGVAR="${SYNOPKG_PKGVAR:-/var/packages/${PKG}/var}"
 COMPOSE_FILE="${PKGDEST}/compose.yml"
 ENV_FILE="${PKGVAR}/.env"
-LOG_FILE="${PKGVAR}/filescodebox.log"
+LOG_FILE="${PKGVAR}/pigeonbox.log"
 
 compose() {
     # -p 固定项目名,保证容器/网络命名稳定,与 Container Manager 手工项目隔离
-    "$DOCKER" compose -p filescodebox --env-file "$ENV_FILE" -f "$COMPOSE_FILE" "$@"
+    "$DOCKER" compose -p pigeonbox --env-file "$ENV_FILE" -f "$COMPOSE_FILE" "$@"
 }
 
 case "$1" in
@@ -53,7 +53,7 @@ case "$1" in
         ;;
     status)
         # LSF 语义:0=运行中,3=未运行,4=未知
-        out="$("$DOCKER" ps --filter "name=filescodebox-frontend" --filter "name=filescodebox-server" --filter "status=running" -q 2>/dev/null)"
+        out="$("$DOCKER" ps --filter "name=pigeonbox-frontend" --filter "name=pigeonbox-server" --filter "status=running" -q 2>/dev/null)"
         [ -n "$out" ] && exit 0
         exit 3
         ;;

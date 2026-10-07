@@ -1,10 +1,10 @@
-# FilesCodeBox Synology DSM
+# PigeonBox Synology DSM
 
-[![CI](https://github.com/filescodebox/synology/actions/workflows/ci.yml/badge.svg)](https://github.com/filescodebox/synology/actions/workflows/ci.yml)
-[![Release](https://github.com/filescodebox/synology/actions/workflows/release.yml/badge.svg)](https://github.com/filescodebox/synology/releases)
+[![CI](https://github.com/pigeonbox/synology/actions/workflows/ci.yml/badge.svg)](https://github.com/pigeonbox/synology/actions/workflows/ci.yml)
+[![Release](https://github.com/pigeonbox/synology/actions/workflows/release.yml/badge.svg)](https://github.com/pigeonbox/synology/releases)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](./LICENSE)
 
-FilesCodeBox（文件快递柜，匿名口令分享文本/文件）的 **群晖 Synology DSM 套件包**：基于官方 Docker 镜像（`ghcr.io/filescodebox/server` + `frontend`）的 docker-compose 编排，装完即用。
+PigeonBox（文件快递柜，匿名口令分享文本/文件）的 **群晖 Synology DSM 套件包**：基于官方 Docker 镜像（`ghcr.io/pigeonbox/server` + `frontend`）的 docker-compose 编排，装完即用。
 
 - **noarch 单包**：不区分机型架构（x86/ARM 皆可，容器镜像按 NAS 架构自动拉取）
 - 安装向导设**端口 / 数据目录 / 管理员密码**，装完浏览器即用
@@ -17,18 +17,18 @@ FilesCodeBox（文件快递柜，匿名口令分享文本/文件）的 **群晖 
 
 ## 安装
 
-1. 套件中心 → 右上角 **手动安装** → 上传 `filescodebox_<版本>.spk`（本仓 [Releases](https://github.com/filescodebox/synology/releases) 下载）
+1. 套件中心 → 右上角 **手动安装** → 上传 `pigeonbox_<版本>.spk`（本仓 [Releases](https://github.com/pigeonbox/synology/releases) 下载）
 2. 未签名第三方包会提示「发布者无法验证」，**确认继续**即可（DSM 7.x 无信任级别设置，属预期行为）
 3. 按向导设置：
    - **端口**：默认 `12345`（1024-65535）
-   - **数据目录**：默认 `/volume1/docker/filescodebox`（建议放 docker 共享文件夹下；大量文件请指到数据盘所在卷）
+   - **数据目录**：默认 `/volume1/docker/pigeonbox`（建议放 docker 共享文件夹下；大量文件请指到数据盘所在卷）
    - **管理员密码**：留空 = 默认 `admin/admin123`，**装完请立即登录修改**
 4. 安装完成后套件自动启动，浏览器访问 `http://NAS的IP:12345`（或套件中心该套件详情页点「打开」）
 
 > NAS 首次启动需从 ghcr.io 拉取镜像（约 200MB）。国内网络拉取慢/失败时，可 SSH 到 NAS 手动导入后重启套件：
 > ```sh
-> sudo docker pull ghcr.io/filescodebox/server:v0.15.0
-> sudo docker pull ghcr.io/filescodebox/frontend:v0.15.0
+> sudo docker pull ghcr.io/pigeonbox/server:v0.15.0
+> sudo docker pull ghcr.io/pigeonbox/frontend:v0.15.0
 > ```
 > （镜像版本以 `数据目录/.env` 里的 `FCB_IMAGE_TAG` 为准。）
 
@@ -46,7 +46,7 @@ FilesCodeBox（文件快递柜，匿名口令分享文本/文件）的 **群晖 
 | `FCB_USER_ALLOW_REGISTRATION` | `false` | 开放注册（NAS 场景默认关闭，管理员建号） |
 | `FCB_JWT_SECRET` | 空 | 留空=数据目录自动生成持久化 |
 
-更多高级项（Redis、存储后端切换、可信代理等）见生态主仓 [ENVIRONMENT_VARIABLES.md](https://github.com/filescodebox/filescodebox/blob/main/docs/ENVIRONMENT_VARIABLES.md)；默认即全功能单机模式（免 Redis）。
+更多高级项（Redis、存储后端切换、可信代理等）见生态主仓 [ENVIRONMENT_VARIABLES.md](https://github.com/pigeonbox/pigeonbox/blob/main/docs/ENVIRONMENT_VARIABLES.md)；默认即全功能单机模式（免 Redis）。
 
 ## 数据与备份
 
@@ -57,19 +57,19 @@ FilesCodeBox（文件快递柜，匿名口令分享文本/文件）的 **群晖 
 ## 常见问题
 
 - **取件/上传报权限错误**：数据目录属主需与容器内运行身份一致（uid 1000），SSH 执行
-  `sudo chown -R 1000:1000 /volume1/docker/filescodebox` 后重启套件
-- **套件启动失败**：套件中心 → 该套件 → 查看日志；或 SSH `sudo synopkg log filescodebox`；
+  `sudo chown -R 1000:1000 /volume1/docker/pigeonbox` 后重启套件
+- **套件启动失败**：套件中心 → 该套件 → 查看日志；或 SSH `sudo synopkg log pigeonbox`；
   多为 Container Manager 未启动或镜像未拉全
 - **改端口后套件中心「打开」按钮仍是旧端口**：INFO 里的 `adminport` 是安装期静态值，
   以 `.env` 的 `FCB_API_PORT` 为准
 
 ## 开发与构建
 
-共享资产（`compose.yml` / `env.example`）的**真相源在生态主仓 [`deploy/nas/`](https://github.com/filescodebox/filescodebox/tree/main/deploy/nas)**：改编排/默认值请改 hub 模板后执行 `bash deploy/nas/sync.sh sync`，**勿直接改本仓这两个文件**——CI 有「与 hub 模板对齐」漂移门禁，模板一动未同步的仓全部变红。跟随 server 新镜像版本走发版列车：hub 仓 `scripts/nas-release-train.sh <镜像tag> --push` 一条命令完成四处钉版+打 tag。
+共享资产（`compose.yml` / `env.example`）的**真相源在生态主仓 [`deploy/nas/`](https://github.com/pigeonbox/pigeonbox/tree/main/deploy/nas)**：改编排/默认值请改 hub 模板后执行 `bash deploy/nas/sync.sh sync`，**勿直接改本仓这两个文件**——CI 有「与 hub 模板对齐」漂移门禁，模板一动未同步的仓全部变红。跟随 server 新镜像版本走发版列车：hub 仓 `scripts/nas-release-train.sh <镜像tag> --push` 一条命令完成四处钉版+打 tag。
 仓库结构：`spk/`（INFO 模板 / scripts / conf / WIZARD_UIFILES / 图标 / compose 编排）+ `scripts/build-spk.sh`（纯 tar 组装，无需官方 toolchain）。
 
 ```sh
-./scripts/build-spk.sh 0.1.0 0001   # → dist/filescodebox_0.1.0-0001.spk
+./scripts/build-spk.sh 0.1.0 0001   # → dist/pigeonbox_0.1.0-0001.spk
 shellcheck -s sh spk/scripts/*
 ```
 
