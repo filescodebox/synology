@@ -7,8 +7,21 @@ NEW_VER="${SYNOPKG_PKGVER:-}"
 [ -n "$NEW_VER" ] || exit 0
 IMG_TAG="v$(printf '%s' "$NEW_VER" | cut -d- -f1)"
 
-grep -vE '^FCB_IMAGE_TAG=' "$ENV_FILE" > "${ENV_FILE}.tmp"
-printf 'FCB_IMAGE_TAG=%s\n' "$IMG_TAG" >> "${ENV_FILE}.tmp"
+# 1.14.3 及以前的包以 FCB_ 前缀写入向导值(compose/模板已 PB_ 化,列车漏网)——
+# 升级到此版先整体迁移,再对齐镜像;不迁移=端口/数据目录/管理员密码全部丢失
+# (密码丢失=生产门禁拒绝启动)。
+for k in API_PORT DATA_DIR ADMIN_PASSWORD IMAGE_TAG; do
+    if grep -q "^FCB_${k}=" "$ENV_FILE" && ! grep -q "^PB_${k}=" "$ENV_FILE"; then
+        sed "s|^FCB_${k}=|PB_${k}=|" "$ENV_FILE" > "${ENV_FILE}.tmp"
+        mv "${ENV_FILE}.tmp" "$ENV_FILE"
+    fi
+done
+# 兜底清残留:同名键迁移后删旧 FCB_ 行
+grep -vE '^FCB_(API_PORT|DATA_DIR|ADMIN_PASSWORD|IMAGE_TAG)=' "$ENV_FILE" > "${ENV_FILE}.tmp"
+mv "${ENV_FILE}.tmp" "$ENV_FILE"
+
+grep -vE '^PB_IMAGE_TAG=' "$ENV_FILE" > "${ENV_FILE}.tmp"
+printf 'PB_IMAGE_TAG=%s\n' "$IMG_TAG" >> "${ENV_FILE}.tmp"
 mv "${ENV_FILE}.tmp" "$ENV_FILE"
 
 cat > "$SYNOPKG_TEMP_LOGFILE" <<EOF

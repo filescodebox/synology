@@ -31,7 +31,7 @@ case "$1" in
             cp "${PKGDEST}/env.example" "$ENV_FILE"
             chmod 600 "$ENV_FILE"
         fi
-        DATA_DIR=$(sed -n 's|^FCB_DATA_DIR=||p' "$ENV_FILE" | head -n 1)
+        DATA_DIR=$(sed -n 's|^PB_DATA_DIR=||p' "$ENV_FILE" | head -n 1)
         if [ -n "$DATA_DIR" ] && [ "$DATA_DIR" != "/" ]; then
             mkdir -p "$DATA_DIR" 2>/dev/null || true
             chown -R 1000:1000 "$DATA_DIR" 2>/dev/null || true

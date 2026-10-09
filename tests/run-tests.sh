@@ -19,8 +19,9 @@ assert_contains() {
     esac
 }
 assert_count() {
+    want=${4:-1}
     n=$(printf '%s\n' "$2" | grep -c "$3" 2>/dev/null || true)
-    if [ "${n:-0}" -eq 1 ]; then ok "$1"; else fail "$1 (期望恰好 1 行 [$3],实际 ${n:-0} 行)"; fi
+    if [ "${n:-0}" -eq "$want" ]; then ok "$1"; else fail "$1 (期望恰好 $want 行 [$3],实际 ${n:-0} 行)"; fi
 }
 
 TMP="$(mktemp -d)"
@@ -67,11 +68,11 @@ SYNOPKG_PKGDEST="$DEST" SYNOPKG_PKGVAR="$VAR" SYNOPKG_TEMP_LOGFILE="$LOGMSG" \
     sh spk/scripts/postinst
 rc=$?
 assert_eq "postinst 退出码" "$rc" "0"
-assert_contains ".env 注入端口"    "$(cat "$VAR/.env")" "FCB_API_PORT=8080"
-assert_contains ".env 注入数据目录" "$(cat "$VAR/.env")" "FCB_DATA_DIR=$DATA"
-assert_contains ".env 注入密码"    "$(cat "$VAR/.env")" "FCB_ADMIN_PASSWORD=s3cret"
-assert_count   ".env 模板行保留且唯一(IMAGE_TAG)" "$(cat "$VAR/.env")" "^FCB_IMAGE_TAG="
-assert_count   ".env 注册开关保留且唯一"           "$(cat "$VAR/.env")" "^FCB_USER_ALLOW_REGISTRATION="
+assert_contains ".env 注入端口"    "$(cat "$VAR/.env")" "PB_API_PORT=8080"
+assert_contains ".env 注入数据目录" "$(cat "$VAR/.env")" "PB_DATA_DIR=$DATA"
+assert_contains ".env 注入密码"    "$(cat "$VAR/.env")" "PB_ADMIN_PASSWORD=s3cret"
+assert_count   ".env 模板行保留且唯一(IMAGE_TAG)" "$(cat "$VAR/.env")" "^PB_IMAGE_TAG="
+assert_count   ".env 注册开关保留且唯一"           "$(cat "$VAR/.env")" "^PB_USER_ALLOW_REGISTRATION="
 # GNU stat 先(-c 权限);macOS BSD stat 无 -c 会失败,再落 -f '%Lp'(顺序不可换:
 # GNU 的 -f 是"文件系统状态"且成功返回,放前面会吞掉兜底)
 assert_eq      ".env 权限 600" "$(stat -c '%a' "$VAR/.env" 2>/dev/null || stat -f '%Lp' "$VAR/.env")" "600"
@@ -82,17 +83,29 @@ echo "── T2 postinst:重复执行不覆盖既有 .env"
 SYNOPKG_PKGDEST="$DEST" SYNOPKG_PKGVAR="$VAR" SYNOPKG_TEMP_LOGFILE="$LOGMSG" \
     wizard_host_port=9999 wizard_data_dir="$DATA" wizard_admin_password=x \
     sh spk/scripts/postinst
-assert_contains "既有 .env 未被覆盖" "$(cat "$VAR/.env")" "FCB_API_PORT=8080"
+assert_contains "既有 .env 未被覆盖" "$(cat "$VAR/.env")" "PB_API_PORT=8080"
 
 echo "── T3 postupgrade:镜像 tag 对齐包版本,其余配置保留"
-printf 'FCB_API_PORT=8080\nFCB_DATA_DIR=%s\nFCB_IMAGE_TAG=v0.1.0\n' "$DATA" > "$VAR/.env"
+printf 'PB_API_PORT=8080\nPB_DATA_DIR=%s\nPB_IMAGE_TAG=v0.1.0\n' "$DATA" > "$VAR/.env"
 SYNOPKG_PKGVAR="$VAR" SYNOPKG_PKGVER="0.2.0-0001" SYNOPKG_TEMP_LOGFILE="$LOGMSG" \
     sh spk/scripts/postupgrade
 rc=$?
 assert_eq "postupgrade 退出码" "$rc" "0"
-assert_contains "镜像 tag 刷新到 v0.2.0" "$(cat "$VAR/.env")" "FCB_IMAGE_TAG=v0.2.0"
-assert_contains "端口保留"               "$(cat "$VAR/.env")" "FCB_API_PORT=8080"
-assert_count   "IMAGE_TAG 恰好一行"      "$(cat "$VAR/.env")" "^FCB_IMAGE_TAG="
+assert_contains "镜像 tag 刷新到 v0.2.0" "$(cat "$VAR/.env")" "PB_IMAGE_TAG=v0.2.0"
+assert_contains "端口保留"               "$(cat "$VAR/.env")" "PB_API_PORT=8080"
+assert_count   "IMAGE_TAG 恰好一行"      "$(cat "$VAR/.env")" "^PB_IMAGE_TAG="
+
+echo "── T3.5 postupgrade:1.14.3 形态(FCB_ 前缀)存量 .env 迁移到 PB_"
+printf 'FCB_API_PORT=8080\nFCB_DATA_DIR=%s\nFCB_ADMIN_PASSWORD=s3cret\nFCB_IMAGE_TAG=v1.14.3\nPB_USER_ALLOW_REGISTRATION=false\n' "$DATA" > "$VAR/.env"
+SYNOPKG_PKGVAR="$VAR" SYNOPKG_PKGVER="1.14.4-0001" SYNOPKG_TEMP_LOGFILE="$LOGMSG" \
+    sh spk/scripts/postupgrade
+rc=$?
+assert_eq "迁移升级退出码" "$rc" "0"
+assert_contains "迁移:端口"     "$(cat "$VAR/.env")" "PB_API_PORT=8080"
+assert_contains "迁移:数据目录" "$(cat "$VAR/.env")" "PB_DATA_DIR=$DATA"
+assert_contains "迁移:密码"     "$(cat "$VAR/.env")" "PB_ADMIN_PASSWORD=s3cret"
+assert_contains "迁移:镜像对齐" "$(cat "$VAR/.env")" "PB_IMAGE_TAG=v1.14.4"
+assert_count   "迁移:无 FCB_ 残留" "$(cat "$VAR/.env")" "^FCB_" 0
 
 echo "── T4 start:按 .env 组装 compose 命令"
 : > "$MOCK_LOG"

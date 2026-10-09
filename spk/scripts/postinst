@@ -6,16 +6,16 @@ mkdir -p "$SYNOPKG_PKGVAR"
 if [ ! -f "$ENV_FILE" ]; then
     # 从模板生成:先剔除要注入的三行,再追加向导值(避免 sed 注入/转义问题)
     {
-        grep -vE '^(FCB_API_PORT|FCB_DATA_DIR|FCB_ADMIN_PASSWORD)=' \
+        grep -vE '^(PB_API_PORT|PB_DATA_DIR|PB_ADMIN_PASSWORD)=' \
             "${SYNOPKG_PKGDEST}/env.example"
-        printf 'FCB_API_PORT=%s\n'       "${wizard_host_port:-12345}"
-        printf 'FCB_DATA_DIR=%s\n'       "${wizard_data_dir:-/volume1/docker/pigeonbox}"
-        printf 'FCB_ADMIN_PASSWORD=%s\n' "${wizard_admin_password:-}"
+        printf 'PB_API_PORT=%s\n'       "${wizard_host_port:-12345}"
+        printf 'PB_DATA_DIR=%s\n'       "${wizard_data_dir:-/volume1/docker/pigeonbox}"
+        printf 'PB_ADMIN_PASSWORD=%s\n' "${wizard_admin_password:-}"
     } > "$ENV_FILE"
     chmod 600 "$ENV_FILE"
 fi
 
-DATA_DIR=$(sed -n 's|^FCB_DATA_DIR=||p' "$ENV_FILE" | head -n 1)
+DATA_DIR=$(sed -n 's|^PB_DATA_DIR=||p' "$ENV_FILE" | head -n 1)
 if [ -n "$DATA_DIR" ] && [ "$DATA_DIR" != "/" ]; then
     mkdir -p "$DATA_DIR"
     # 后端容器以 uid 1000 运行,bind 挂载目录属主必须匹配,否则库/密钥写不进
@@ -25,6 +25,6 @@ fi
 cat > "$SYNOPKG_TEMP_LOGFILE" <<EOF
 <p>PigeonBox 安装完成。</p>
 <p>启动套件后浏览器访问 <strong>http://NAS的IP:${wizard_host_port:-12345}</strong></p>
-<p>默认管理员 <strong>admin</strong>${wizard_admin_password:+(密码为安装时设置)}${wizard_admin_password:-(默认密码 admin123,请立即修改)}。</p>
+<p>默认管理员 <strong>admin</strong>,密码为安装向导中设置的值(必填;遗失可卸载重装,数据目录保留)。</p>
 EOF
 exit 0
