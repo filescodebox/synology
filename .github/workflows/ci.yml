@@ -13,7 +13,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: shellcheck(bash 严格模式与 sh 兼容性)
         run: |
           shellcheck -s sh spk/scripts/*
@@ -34,13 +34,13 @@ jobs:
     # start-stop-status 全流程/postupgrade 版本对齐。DSM 集成仍需真机。
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: tests/run-tests.sh
 
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: 组装 SPK(CI 版本 0.0.0-0001)
         run: ./scripts/build-spk.sh 0.0.0 0001
       - name: 结构断言
