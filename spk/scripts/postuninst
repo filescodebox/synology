@@ -3,7 +3,7 @@
 ENV_FILE="${SYNOPKG_PKGVAR}/.env"
 DATA_DIR=""
 if [ -f "$ENV_FILE" ]; then
-    DATA_DIR=$(sed -n 's|^FCB_DATA_DIR=||p' "$ENV_FILE" | head -n 1)
+    DATA_DIR=$(sed -n 's|^PB_DATA_DIR=||p' "$ENV_FILE" | head -n 1)
 fi
 {
     echo "<p>PigeonBox 套件已卸载,容器已移除。</p>"

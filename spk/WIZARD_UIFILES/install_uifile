@@ -44,13 +44,14 @@
     "items": [
       {
         "type": "password",
-        "desc": "管理员账号 admin 的登录密码。留空则使用默认密码 admin123——装完后请立即登录网页修改(建议只用字母和数字)。",
+        "desc": "管理员账号 admin 的登录密码(必填)。本部署为安全生产模式,留空=容器拒绝启动;请设置强密码并妥善保存。",
         "subitems": [
           {
             "key": "wizard_admin_password",
             "desc": "管理员密码",
             "validator": {
-              "allowBlank": true
+              "fn": "function(v){return Object.prototype.toString.call(v)==='[object String]' && v.length >= 8;}",
+              "errorText": "管理员密码必填,至少 8 位"
             }
           }
         ]
