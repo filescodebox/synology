@@ -85,26 +85,30 @@ SYNOPKG_PKGDEST="$DEST" SYNOPKG_PKGVAR="$VAR" SYNOPKG_TEMP_LOGFILE="$LOGMSG" \
     sh spk/scripts/postinst
 assert_contains "既有 .env 未被覆盖" "$(cat "$VAR/.env")" "PB_API_PORT=8080"
 
-echo "── T3 postupgrade:镜像 tag 对齐包版本,其余配置保留"
+echo "── T3 postupgrade:镜像 tag 对齐包内真相源(env.example),其余配置保留"
+# 1.14.x 起包版本=发布列车号、镜像版本=0.15.x 两者脱钩且 ghcr tag 无 v 前缀
+# (62ca9e9 修正:真相源=包根 env.example,旧「v+包主版本」推导指向不存在的 tag
+# 会令升级后拉镜像必败)——期望值动态取自包内模板,随列车不改断言。
+WANT_TAG=$(sed -n 's/^PB_IMAGE_TAG=//p' "$DEST/env.example" | head -1)
 printf 'PB_API_PORT=8080\nPB_DATA_DIR=%s\nPB_IMAGE_TAG=v0.1.0\n' "$DATA" > "$VAR/.env"
-SYNOPKG_PKGVAR="$VAR" SYNOPKG_PKGVER="0.2.0-0001" SYNOPKG_TEMP_LOGFILE="$LOGMSG" \
+SYNOPKG_PKGDEST="$DEST" SYNOPKG_PKGVAR="$VAR" SYNOPKG_PKGVER="0.2.0-0001" SYNOPKG_TEMP_LOGFILE="$LOGMSG" \
     sh spk/scripts/postupgrade
 rc=$?
 assert_eq "postupgrade 退出码" "$rc" "0"
-assert_contains "镜像 tag 刷新到 v0.2.0" "$(cat "$VAR/.env")" "PB_IMAGE_TAG=v0.2.0"
+assert_contains "镜像 tag 刷新到包内真相源($WANT_TAG)" "$(cat "$VAR/.env")" "PB_IMAGE_TAG=$WANT_TAG"
 assert_contains "端口保留"               "$(cat "$VAR/.env")" "PB_API_PORT=8080"
 assert_count   "IMAGE_TAG 恰好一行"      "$(cat "$VAR/.env")" "^PB_IMAGE_TAG="
 
 echo "── T3.5 postupgrade:1.14.3 形态(FCB_ 前缀)存量 .env 迁移到 PB_"
 printf 'FCB_API_PORT=8080\nFCB_DATA_DIR=%s\nFCB_ADMIN_PASSWORD=s3cret\nFCB_IMAGE_TAG=v1.14.3\nPB_USER_ALLOW_REGISTRATION=false\n' "$DATA" > "$VAR/.env"
-SYNOPKG_PKGVAR="$VAR" SYNOPKG_PKGVER="1.14.4-0001" SYNOPKG_TEMP_LOGFILE="$LOGMSG" \
+SYNOPKG_PKGDEST="$DEST" SYNOPKG_PKGVAR="$VAR" SYNOPKG_PKGVER="1.14.4-0001" SYNOPKG_TEMP_LOGFILE="$LOGMSG" \
     sh spk/scripts/postupgrade
 rc=$?
 assert_eq "迁移升级退出码" "$rc" "0"
 assert_contains "迁移:端口"     "$(cat "$VAR/.env")" "PB_API_PORT=8080"
 assert_contains "迁移:数据目录" "$(cat "$VAR/.env")" "PB_DATA_DIR=$DATA"
 assert_contains "迁移:密码"     "$(cat "$VAR/.env")" "PB_ADMIN_PASSWORD=s3cret"
-assert_contains "迁移:镜像对齐" "$(cat "$VAR/.env")" "PB_IMAGE_TAG=v1.14.4"
+assert_contains "迁移:镜像对齐" "$(cat "$VAR/.env")" "PB_IMAGE_TAG=$WANT_TAG"
 assert_count   "迁移:无 FCB_ 残留" "$(cat "$VAR/.env")" "^FCB_" 0
 
 echo "── T4 start:按 .env 组装 compose 命令"
