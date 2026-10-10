@@ -27,8 +27,8 @@ PigeonBox（文件快递柜，匿名口令分享文本/文件）的 **群晖 Syn
 
 > NAS 首次启动需从 ghcr.io 拉取镜像（约 200MB）。国内网络拉取慢/失败时，可 SSH 到 NAS 手动导入后重启套件：
 > ```sh
-> sudo docker pull ghcr.io/pigeonbox/server:v0.15.8
-> sudo docker pull ghcr.io/pigeonbox/frontend:v0.15.8
+> sudo docker pull ghcr.io/pigeonbox/server:0.15.9
+> sudo docker pull ghcr.io/pigeonbox/frontend:0.15.9
 > ```
 > （镜像版本以 `数据目录/.env` 里的 `PB_IMAGE_TAG` 为准。）
 

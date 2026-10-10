@@ -1,11 +1,14 @@
 #!/bin/sh
-# postupgrade —— 把 .env 的镜像版本对齐到本包版本(镜像 tag=包主版本,如 v0.2.0)
+# postupgrade —— 把 .env 的镜像版本对齐到本包自带的真相源(env.example)。
+# 注:1.14.x 起包版本=发布列车号(1.15.x),与镜像版本(0.15.x)脱钩,且 ghcr
+# tag 无 v 前缀——旧「v+包主版本」推导会指向不存在的 tag,升级后拉镜像必败
+# (2026-10-10 修正:真相源=包根 env.example,由发布列车 bump 写入)。
 ENV_FILE="${SYNOPKG_PKGVAR}/.env"
 [ -f "$ENV_FILE" ] || exit 0
 
 NEW_VER="${SYNOPKG_PKGVER:-}"
 [ -n "$NEW_VER" ] || exit 0
-IMG_TAG="v$(printf '%s' "$NEW_VER" | cut -d- -f1)"
+IMG_TAG=$(sed -n 's/^PB_IMAGE_TAG=//p' "${SYNOPKG_PKGDEST}/env.example" 2>/dev/null | head -1)
 
 # 1.14.3 及以前的包以 FCB_ 前缀写入向导值(compose/模板已 PB_ 化,列车漏网)——
 # 升级到此版先整体迁移,再对齐镜像;不迁移=端口/数据目录/管理员密码全部丢失
@@ -20,12 +23,15 @@ done
 grep -vE '^FCB_(API_PORT|DATA_DIR|ADMIN_PASSWORD|IMAGE_TAG)=' "$ENV_FILE" > "${ENV_FILE}.tmp"
 mv "${ENV_FILE}.tmp" "$ENV_FILE"
 
-grep -vE '^PB_IMAGE_TAG=' "$ENV_FILE" > "${ENV_FILE}.tmp"
-printf 'PB_IMAGE_TAG=%s\n' "$IMG_TAG" >> "${ENV_FILE}.tmp"
-mv "${ENV_FILE}.tmp" "$ENV_FILE"
+# 读不到包内真相源则不动 .env 的镜像行(宁旧勿坏,保留现状可继续运行)
+if [ -n "$IMG_TAG" ]; then
+    grep -vE '^PB_IMAGE_TAG=' "$ENV_FILE" > "${ENV_FILE}.tmp"
+    printf 'PB_IMAGE_TAG=%s\n' "$IMG_TAG" >> "${ENV_FILE}.tmp"
+    mv "${ENV_FILE}.tmp" "$ENV_FILE"
+fi
 
 cat > "$SYNOPKG_TEMP_LOGFILE" <<EOF
-<p>PigeonBox 已升级到 ${NEW_VER},镜像版本已对齐为 ${IMG_TAG}。</p>
+<p>PigeonBox 已升级到 ${NEW_VER}${IMG_TAG:+,镜像版本已对齐为 ${IMG_TAG}}。</p>
 <p>套件将自动重启并按新版本重建容器;数据目录不变。</p>
 EOF
 exit 0
